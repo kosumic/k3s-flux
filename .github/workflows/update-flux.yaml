@@ -1,0 +1,70 @@
+name: Update Flux
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Regenerate and validate manifests without committing
+        type: boolean
+        default: false
+  schedule:
+    - cron: "0 9 1 * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-flux-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  components:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Flux CLI
+        uses: fluxcd/flux2/action@main
+
+      - name: Set up yq
+        uses: fluxcd/pkg/actions/yq@main
+
+      - name: Set up kubeconform
+        uses: fluxcd/pkg/actions/kubeconform@main
+
+      - name: Set up Kustomize
+        uses: fluxcd/pkg/actions/kustomize@main
+        with:
+          version: 5.7.1
+
+      - name: Regenerate Flux manifests for all clusters
+        id: update
+        run: |
+          while IFS= read -r -d '' manifest; do
+            echo "Updating $manifest"
+            flux install --export > "$manifest"
+          done < <(git ls-files -z 'clusters/*/flux-system/gotk-components.yaml')
+          echo "flux_version=$(flux --version)" >> "$GITHUB_OUTPUT"
+
+      - name: Validate manifests
+        run: bash ./scripts/validate.sh
+
+      - name: Show changes
+        run: git diff --stat
+
+      - name: Commit update
+        if: ${{ !inputs.dry-run }}
+        env:
+          FLUX_VERSION: ${{ steps.update.outputs.flux_version }}
+        run: |
+          git add -- 'clusters/*/flux-system/gotk-components.yaml'
+          if git diff --cached --quiet; then
+            echo "Flux manifests are already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: update to $FLUX_VERSION"
+          git push origin "HEAD:$GITHUB_REF_NAME"
