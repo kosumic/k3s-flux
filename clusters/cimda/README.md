@@ -95,3 +95,44 @@ kubectl --kubeconfig="$HOME/.kube/cimda.yaml" -n monitoring get pods,pvc
 kubectl --kubeconfig="$HOME/.kube/cimda.yaml" -n gpu-operator \
   get pods,servicemonitors -l app=nvidia-dcgm-exporter
 ```
+
+## Host storage
+
+K3s state, container images, persistent volumes, kubelet data, and pod logs live
+on the separate 1.9 TiB NVMe disk mounted at `/home/data` (`/dev/nvme2n1`, UUID
+`f9238a38-a5d3-42dd-ba1d-220998768f89`). They were migrated off the 940 GiB root
+partition (`/dev/nvme3n1p4`) on 2026-09-30. Do not relocate cluster data to root.
+
+Persistent bind mounts preserve the paths expected by k3s and existing PVs:
+
+| Kubernetes path | Backing directory on the data disk |
+| --- | --- |
+| `/var/lib/rancher/k3s` | `/home/data/k3s-host/data` |
+| `/var/lib/kubelet` | `/home/data/k3s-host/kubelet` |
+| `/var/log/pods` | `/home/data/k3s-host/pod-logs` |
+
+The default local-path provisioner still uses `/var/lib/rancher/k3s/storage`,
+which now resolves to the data disk, including the existing Prometheus PVC.
+`/var/log/containers` contains symlinks into the relocated pod logs. Small system
+configuration files, the k3s binary, and system journal remain on the OS disk.
+
+These host mounts are configured in `/etc/fstab`, with
+`bind,x-systemd.requires-mounts-for=/home/data`. The systemd drop-in
+`/etc/systemd/system/k3s.service.d/20-storage.conf` uses `RequiresMountsFor`,
+`BindsTo`, and mountpoint checks to prevent k3s starting without the data disk
+and its bind mounts. Preserve this dependency when changing host storage.
+
+Migration copies were checksum-verified before startup. The original stopped
+state and pre-migration host configuration are retained in the root-only
+`/home/data/k3s-host/backup/` directory. These are one-time rollback copies, not
+scheduled backups; restoring them would discard subsequent cluster changes.
+
+Verify physical storage on the tower:
+
+```bash
+findmnt -T /var/lib/rancher/k3s/storage
+findmnt -T /var/lib/kubelet
+findmnt -T /var/log/pods
+df -h / /home/data
+systemctl show k3s -p RequiresMountsFor -p BindsTo --no-pager
+```
