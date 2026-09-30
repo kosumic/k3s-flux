@@ -1,0 +1,73 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gpu-operator
+  namespace: gpu-operator
+spec:
+  interval: 10m
+  timeout: 20m
+  chart:
+    spec:
+      chart: gpu-operator
+      version: v26.7.1
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: nvidia
+        namespace: gpu-operator
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 2
+  upgrade:
+    crds: CreateReplace
+  values:
+    # The host driver, toolkit, and CDI definitions are managed outside Kubernetes.
+    driver:
+      enabled: false
+    toolkit:
+      enabled: false
+    cdi:
+      enabled: true
+      nriPluginEnabled: false
+    devicePlugin:
+      env:
+        - name: DEVICE_LIST_STRATEGY
+          value: cdi-cri
+    mig:
+      strategy: none
+    migManager:
+      enabled: false
+    dcgm:
+      enabled: false
+    dcgmExporter:
+      enabled: false
+    sandboxWorkloads:
+      enabled: false
+    sandboxDevicePlugin:
+      enabled: false
+    kataSandboxDevicePlugin:
+      enabled: false
+    vfioManager:
+      enabled: false
+    vgpuManager:
+      enabled: false
+    vgpuDeviceManager:
+      enabled: false
+    ccManager:
+      enabled: false
+    # Check discovery without launching CUDA workloads or changing /dev/char.
+    validator:
+      driver:
+        env:
+          - name: DISABLE_DEV_CHAR_SYMLINK_CREATION
+            value: "true"
+      cuda:
+        env:
+          - name: WITH_WORKLOAD
+            value: "false"
+      plugin:
+        env:
+          - name: WITH_WORKLOAD
+            value: "false"
