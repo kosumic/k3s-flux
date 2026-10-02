@@ -31,9 +31,21 @@ n-gram lookup table in CPU RAM. Lazy loading is disabled.
 
 - Cluster service: `llama-qwen38-flash-next.llama-qwen38.svc:8080`.
 - Current service IP: `10.43.162.181:8080`.
-- Local Codex endpoint: `http://127.0.0.1:18081/v1` through the existing
-  `codex-qwen38-tunnel.service` SSH tunnel over Tailscale.
+- Direct Codex endpoint: `http://100.100.130.75/qwen/v1` over Tailscale HTTP.
+  Flux-managed Traefik Ingress strips `/qwen` before forwarding to llama.cpp.
+  Its IPAllowList permits tailnet and loopback peers; LAN clients are rejected.
+- The old `codex-qwen38-tunnel.service` is no longer needed. It can be restored
+  as a fallback by enabling it and reverting the Codex provider base URL to
+  `http://127.0.0.1:18081/v1`.
 - Both `/v1/chat/completions` and `/v1/responses` are served by llama.cpp.
+
+On the tower itself, the cluster Service IP remains usable directly. A pod's
+port is not automatically bound to host `localhost`; use the cluster Service
+for local diagnostics. From the workstation, launch the configured profile:
+
+```sh
+codex --profile qwen38-flash-next
+```
 
 ## Original model and rollback
 
@@ -62,6 +74,18 @@ Verified on 2026-10-02 after activation:
 - Synthetic arithmetic passed through Chat Completions and Responses at low
   and high reasoning effort. Responses function calling and SSE streaming
   also passed. These are compatibility smoke tests, not quality benchmarks.
+- After the HTTP ingress migration, all of those API smoke tests passed again
+  at `http://100.100.130.75/qwen`. The old SSH tunnel was stopped and disabled,
+  and the direct HTTP health endpoint remained healthy.
+- Non-tailnet source-IP requests returned 403 on both HTTP port 80 and the
+  allocated NodePort. Spoofing X-Forwarded-For did not bypass the allowlist.
+
+Rollback of the HTTP migration does not require changing the model. Enable
+the existing tunnel with `systemctl --user enable --now codex-qwen38-tunnel.service`
+and restore `model_providers.qwen38_tower.base_url` in the workstation's
+`~/.codex/config.toml` to `http://127.0.0.1:18081/v1`. To remove the route,
+remove its Ingress and middleware resources from the Flux app overlay and
+commit/push; do not delete the live objects outside Flux.
 
 The switch is commit `881532b0cbcb1038b0279d7a5203e8bed4b35d0c`; reverting
 that commit restores the original deployment settings.
@@ -74,8 +98,8 @@ ssh cimda0728@cimda0728-tower \
   'kubectl -n llama-qwen38 get jobs,pods,svc'
 ssh cimda0728@cimda0728-tower \
   'kubectl -n llama-qwen38 rollout status deployment/llama-qwen38-flash-next'
-curl --fail http://127.0.0.1:18081/health
-curl --fail http://127.0.0.1:18081/props
+curl --fail http://100.100.130.75/qwen/health
+curl --fail http://100.100.130.75/qwen/props
 ```
 
 Use synthetic test prompts for verification; do not inspect user-uploaded
