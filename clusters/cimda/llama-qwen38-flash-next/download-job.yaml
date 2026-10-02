@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: qwen38-flash-next-download
+  namespace: llama-qwen38
+spec:
+  backoffLimit: 6
+  activeDeadlineSeconds: 172800
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: cimda0728-tower
+      restartPolicy: OnFailure
+      containers:
+        - name: download
+          image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              uvx --from 'huggingface_hub[hf_xet]==0.35.3' hf download \
+                unsloth/Qwen3.8-Flash-Next-GGUF \
+                --revision 38bb39ee97821de2c9009abb7e93950eec396e66 \
+                --include 'UD-IQ3_XXS/*.gguf' \
+                --local-dir /models
+              uvx --from 'huggingface_hub[hf_xet]==0.35.3' hf download \
+                unsloth/Qwen3.8-Flash-Next-GGUF mmproj-BF16.gguf \
+                --revision 38bb39ee97821de2c9009abb7e93950eec396e66 \
+                --local-dir /models
+              cd /models
+              printf '%s\n' \
+                '268f81fdedf3149a538f252308927a4d5d1f6e062c178568a51e3b519744f8a8  UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00001-of-00003.gguf' \
+                'cfe600b236b88c7fad1613a5ca5e83b9f2beb63cbd44c32b2be50a44747c695f  UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf' \
+                'f1912ba34c79427d2295a58dcb2b732b5931af5bef7a373c60557a57d9ee7250  UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00003-of-00003.gguf' \
+                '2e788f8c511d8093c7b43cb87b2fd7e14228340318057f8fb20c86df2efe2355  mmproj-BF16.gguf' \
+                | sha256sum -c -
+              touch /models/.verified-38bb39ee97821de2c9009abb7e93950eec396e66
+          env:
+            - name: HF_HOME
+              value: /models/.hf-home
+            - name: HF_HUB_DOWNLOAD_TIMEOUT
+              value: '600'
+          resources:
+            requests:
+              cpu: '4'
+              memory: 4Gi
+            limits:
+              memory: 16Gi
+          volumeMounts:
+            - name: model
+              mountPath: /models
+      volumes:
+        - name: model
+          persistentVolumeClaim:
+            claimName: qwen38-flash-next-model

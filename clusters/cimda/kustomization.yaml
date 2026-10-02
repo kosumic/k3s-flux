@@ -4,3 +4,4 @@ resources:
   - flux-system
   - monitoring
   - gpu-operator
+  - llama-qwen38-flash-next
