@@ -64,6 +64,9 @@ spec:
         externalTrafficPolicy: Local
         # ServiceLB forwards to the NodePort when externalTrafficPolicy is Local.
         allocateLoadBalancerNodePorts: true
+        # Route this existing tailnet address directly, preserving its peer IP.
+        externalIPs:
+          - 100.100.130.75
         loadBalancerSourceRanges:
           - 100.64.0.0/10
           - 127.0.0.1/32
