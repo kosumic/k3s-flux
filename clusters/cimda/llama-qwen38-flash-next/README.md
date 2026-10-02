@@ -17,6 +17,10 @@ The legacy API model ID `qwen3.8-flash-next-ud-iq3-xxs` is retained for local
 Codex compatibility. It now identifies the abliterated Q4 checkpoint; the
 deployment annotations and `/props` show the actual repository and model path.
 
+This is a community abliterated checkpoint, not an official Qwen release.
+Reduced refusals do not guarantee unrestricted behavior or unchanged reasoning
+and coding quality; no comprehensive quality benchmark was performed here.
+
 ## Runtime and endpoints
 
 The pinned llama.cpp image is `server-cuda12-b11058`, with its digest recorded
@@ -48,6 +52,19 @@ To roll back through Flux, revert the model-switch commit and push it to
 Keep changes in Git; avoid patching the live Deployment outside Flux.
 
 ## Checks
+
+Verified on 2026-10-02 after activation:
+
+- All four GGUF shards and the vision projector passed pinned SHA-256 checks.
+- Deployment became Ready with no restarts; both RTX A6000s were in use.
+  GPU memory immediately after loading was 42,826 MiB and 41,049 MiB.
+- `/props` through the local tunnel identified the abliterated Q4 model path.
+- Synthetic arithmetic passed through Chat Completions and Responses at low
+  and high reasoning effort. Responses function calling and SSE streaming
+  also passed. These are compatibility smoke tests, not quality benchmarks.
+
+The switch is commit `881532b0cbcb1038b0279d7a5203e8bed4b35d0c`; reverting
+that commit restores the original deployment settings.
 
 From the Flux repository:
 
