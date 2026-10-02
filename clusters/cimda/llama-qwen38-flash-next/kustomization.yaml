@@ -7,3 +7,6 @@ resources:
   - download-abliterated-job.yaml
   - deployment.yaml
   - service.yaml
+  - tailnet-middleware.yaml
+  - strip-prefix-middleware.yaml
+  - ingress.yaml

@@ -32,6 +32,7 @@ spec:
       isDefaultClass: false
     providers:
       kubernetesCRD:
+        safeNaming: false
         namespaces:
           - llama-qwen38
       kubernetesIngress:
@@ -61,7 +62,8 @@ spec:
         type: LoadBalancer
         # Preserve client addresses for the model's IPAllowList middleware.
         externalTrafficPolicy: Local
-        allocateLoadBalancerNodePorts: false
+        # ServiceLB forwards to the NodePort when externalTrafficPolicy is Local.
+        allocateLoadBalancerNodePorts: true
         loadBalancerSourceRanges:
           - 100.64.0.0/10
           - 127.0.0.1/32
@@ -70,6 +72,8 @@ spec:
       insecure: false
     accessLog:
       enabled: false
+    additionalArguments:
+      - --entrypoints.web.http.aliasheadersstrategy=reject
     resources:
       requests:
         cpu: 100m

@@ -1,0 +1,13 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: qwen-tailnet-only
+  namespace: llama-qwen38
+spec:
+  ipAllowList:
+    # Use the actual peer address, never a client-supplied forwarding header.
+    sourceRange:
+      - 100.64.0.0/10
+      - fd7a:115c:a1e0::/48
+      - 127.0.0.1/32
+      - ::1/128
