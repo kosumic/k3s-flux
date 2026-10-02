@@ -93,6 +93,14 @@ QWEN_TEST_BASE=http://100.100.130.75/qwen node verify-codex.mjs
 The check validates the mounted template, late developer messages at low/high
 effort, high-effort function-call round trips, streaming, and message ordering.
 It never reads user sessions, prompts, uploaded images, or server logs.
+Verified on 2026-10-02 after the Flux rollout: all regression checks passed,
+the model pod was Ready with zero restarts, and an ephemeral Codex thread using
+the saved high-effort settings completed two arithmetic turns, actual local
+compaction, and a successful continuation. A separate `codex exec --profile
+qwen38-flash-next` check confirmed the saved high default and correct answer.
+The existing model-catalog/fallback-metadata warnings remain; they are separate
+from this reproduced template failure and did not block these tests.
+
 Rollback by reverting the compatibility commit in Git and reconciling Flux;
 removing the generated ConfigMap, volume, mount, and template-file arguments
 restores the checkpoint's embedded template. No weight download is needed.
