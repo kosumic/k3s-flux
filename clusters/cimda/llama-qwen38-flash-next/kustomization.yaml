@@ -4,5 +4,6 @@ resources:
   - namespace.yaml
   - pvc.yaml
   - download-job.yaml
+  - download-abliterated-job.yaml
   - deployment.yaml
   - service.yaml
