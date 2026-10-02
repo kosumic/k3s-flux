@@ -26,7 +26,7 @@ and coding quality; no comprehensive quality benchmark was performed here.
 The pinned llama.cpp image is `server-cuda12-b11058`, with its digest recorded
 in `deployment.yaml`. The service uses a 32,768-token context, one request slot,
 all transformer layers on the GPUs, layer splitting `1,1`, Flash Attention,
-and the model's Jinja template. `per_layer_token_embd=CPU` keeps the large
+and the compatibility-patched model Jinja template. `per_layer_token_embd=CPU` keeps the large
 n-gram lookup table in CPU RAM. Lazy loading is disabled.
 
 - Cluster service: `llama-qwen38-flash-next.llama-qwen38.svc:8080`.
@@ -46,6 +46,56 @@ for local diagnostics. From the workstation, launch the configured profile:
 ```sh
 codex --profile qwen38-flash-next
 ```
+
+## Codex compaction compatibility
+
+`chat-template.jinja` is a copy of the active pinned checkpoint's embedded
+template, with one compatibility change: late `system` or `developer` messages
+are rendered as system messages at their original history position instead
+of raising `System message must be at the beginning.` This preserves both
+instruction priority and chronology; it does not hoist later instructions to
+the start or relabel them as user messages.
+
+The original embedded template's SHA-256 is
+`12827f24b742ea4e80cdc12dbcf9622227056b9f797252a3149263d4f9aaadce`.
+Before rollout, 12 synthetic CPU rendering comparisons confirmed byte-identical
+ordinary text, vision/video placeholders, tool history, and reasoning history
+at low, medium, and high effort. Actual image/video inference and comprehensive
+quality benchmarks are not covered by these compatibility checks.
+
+Codex retains older user messages and reinjects developer context immediately
+before the latest user message after local compaction. The original template
+rejects that ordering with HTTP 500, which Codex misleadingly presents as
+`We're currently experiencing high demand`.
+
+Kustomize generates a content-hashed ConfigMap from the template, mounts it
+read-only at `/etc/llama`, and passes `--chat-template-file` to llama.cpp.
+Template edits therefore trigger a normal Flux-managed Deployment rollout;
+there are no manual live patches. Keep the template tied to this checkpoint
+and compare it against a new model's native template before changing weights.
+
+All other native rendering, including tool calls, vision/video placeholders,
+and thinking format, is unchanged. The workstation Qwen profile defaults to
+`model_reasoning_effort = "high"`; this checkpoint's template maps `high` to
+its native `xhigh` reasoning instruction. This is model-template behavior,
+not a promise of OpenAI-equivalent reasoning budgets. Existing Codex sessions
+may retain their previous effort; select high in `/model` or restart with the
+profile. The plain `codex` model selection is not changed.
+
+Run the synthetic integration regression from this directory:
+
+```sh
+node verify-codex.mjs
+# For another deployment:
+QWEN_TEST_BASE=http://100.100.130.75/qwen node verify-codex.mjs
+```
+
+The check validates the mounted template, late developer messages at low/high
+effort, high-effort function-call round trips, streaming, and message ordering.
+It never reads user sessions, prompts, uploaded images, or server logs.
+Rollback by reverting the compatibility commit in Git and reconciling Flux;
+removing the generated ConfigMap, volume, mount, and template-file arguments
+restores the checkpoint's embedded template. No weight download is needed.
 
 ## Original model and rollback
 

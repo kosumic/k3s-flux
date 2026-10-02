@@ -70,6 +70,8 @@ spec:
             - --flash-attn
             - 'on'
             - --jinja
+            - --chat-template-file
+            - /etc/llama/chat-template.jinja
           ports:
             - name: http
               containerPort: 8080
@@ -96,7 +98,13 @@ spec:
             - name: model
               mountPath: /models
               readOnly: true
+            - name: chat-template
+              mountPath: /etc/llama
+              readOnly: true
       volumes:
+        - name: chat-template
+          configMap:
+            name: qwen38-codex-chat-template
         - name: model
           persistentVolumeClaim:
             claimName: qwen38-flash-next-model
