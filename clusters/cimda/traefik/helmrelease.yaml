@@ -1,0 +1,79 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: traefik
+  namespace: ingress-system
+spec:
+  interval: 10m
+  timeout: 10m
+  releaseName: traefik
+  chart:
+    spec:
+      chart: traefik
+      version: '41.6.1'
+      sourceRef:
+        kind: HelmRepository
+        name: traefik
+        namespace: ingress-system
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 2
+  upgrade:
+    crds: CreateReplace
+  values:
+    fullnameOverride: traefik
+    deployment:
+      replicas: 1
+    nodeSelector:
+      kubernetes.io/hostname: cimda0728-tower
+    ingressClass:
+      name: traefik
+      isDefaultClass: false
+    providers:
+      kubernetesCRD:
+        namespaces:
+          - llama-qwen38
+      kubernetesIngress:
+        namespaces:
+          - llama-qwen38
+    ingressRoute:
+      dashboard:
+        enabled: false
+    ports:
+      web:
+        expose:
+          default: true
+        exposedPort: 80
+        forwardedHeaders:
+          insecure: false
+          trustedIPs: []
+        transport:
+          respondingTimeouts:
+            readTimeout: 120s
+            writeTimeout: 0s
+            idleTimeout: 180s
+      websecure:
+        expose:
+          default: false
+    service:
+      spec:
+        type: LoadBalancer
+        # Preserve client addresses for the model's IPAllowList middleware.
+        externalTrafficPolicy: Local
+        allocateLoadBalancerNodePorts: false
+        loadBalancerSourceRanges:
+          - 100.64.0.0/10
+          - 127.0.0.1/32
+    api:
+      dashboard: false
+      insecure: false
+    accessLog:
+      enabled: false
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: '1'
+        memory: 512Mi
