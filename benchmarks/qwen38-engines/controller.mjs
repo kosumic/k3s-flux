@@ -158,6 +158,7 @@ try {
   await state('complete', { baseline_restored: true });
 } catch (error) {
   console.error(error.stack);
+  if (mutation) await collect().catch(error => console.warn(`Partial artifacts: ${error.message}`));
   await state('failed', { error: error.message, baseline_restored: !mutation });
   process.exitCode = 1;
 } finally {

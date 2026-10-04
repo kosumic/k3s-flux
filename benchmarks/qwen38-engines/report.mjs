@@ -30,8 +30,13 @@ export function pairedInterval(rows, cell, field, trials = 2000) {
   for (let trial = 0; trial < trials; trial++) {
     const sample = [];
     for (let i = 0; i < blocks.length; i++) {
-      const pool = pairs.filter(x => x[0].block === blocks[Math.floor(random() * blocks.length)]);
-      for (let j = 0; j < pool.length; j++) sample.push(pool[Math.floor(random() * pool.length)]);
+      const selectedBlock = blocks[Math.floor(random() * blocks.length)];
+      const pool = pairs.filter(x => x[0].block === selectedBlock);
+      const rounds = [...new Set(pool.map(x => x[0].round))];
+      for (let j = 0; j < rounds.length; j++) {
+        const selectedRound = rounds[Math.floor(random() * rounds.length)];
+        sample.push(...pool.filter(x => x[0].round === selectedRound));
+      }
     }
     const left = percentile(sample.map(x => x[0][field]), 0.5), right = percentile(sample.map(x => x[1][field]), 0.5);
     estimates.push((left - right) / left * 100);

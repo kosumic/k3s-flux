@@ -43,7 +43,8 @@ Start only from a clean, pushed worktree:
 node benchmarks/qwen38-engines/controller.mjs
 ```
 
-The controller waits for the build, then runs A1/B1/B2/A2/A3/B3. Each block
+The controller waits for the build and runs a short mistral.rs preflight
+excluded from the statistics, then A1/B1/B2/A2/A3/B3. Each block
 contains two warmups and 30 measured rounds in 12 performance cells. Quality
 uses 100 paired tasks once per engine. Compatibility runs in every block,
 including an isolated real Codex app-server compaction test over the public
