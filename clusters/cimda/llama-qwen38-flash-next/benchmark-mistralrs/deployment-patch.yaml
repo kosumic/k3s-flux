@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-qwen38-flash-next
+  namespace: llama-qwen38
+spec:
+  template:
+    metadata:
+      annotations:
+        benchmark-engine: mistralrs
+        benchmark-source-revision: 3f2515e9b5adc2ac44949c128c50a13b15721294
+    spec:
+      containers:
+        - name: llama-server
+          $patch: delete
+        - name: mistralrs
+          image: nvidia/cuda:12.8.1-devel-ubuntu22.04@sha256:a99a1860ba8e2916e5c3e73b72ec4c4301653a84586e05bfc9a2aa2d58027e97
+          command:
+            - /build/bin/mistralrs
+          args:
+            - serve
+            - -f
+            - /models/abliterated-huihui/UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf;/models/abliterated-huihui/UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00002-of-00004.gguf;/models/abliterated-huihui/UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00003-of-00004.gguf;/models/abliterated-huihui/UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00004-of-00004.gguf
+            - --mmproj
+            - /models/abliterated-huihui/mmproj-model-bf16.gguf
+            - --jinja-explicit
+            - /etc/llama/chat-template.jinja
+            - --dtype
+            - f16
+            - --max-model-len
+            - '32768'
+            - --max-seqs
+            - '1'
+            - --device-layers
+            - '0:24;1:24'
+            - --paged-attn
+            - 'on'
+            - --pa-context-len
+            - '32768'
+            - --pa-cache-type
+            - auto
+            - --prefix-cache-n
+            - '16'
+            - --host
+            - 0.0.0.0
+            - --port
+            - '8080'
+            - --no-ui
+            - --disable-access-log
+            - --token-source
+            - none
+          env:
+            - name: MISTRALRS_NO_NCCL
+              value: '1'
+            - name: HF_HUB_OFFLINE
+              value: '1'
+            - name: TOKENIZERS_PARALLELISM
+              value: 'false'
+          ports:
+            - name: http
+              containerPort: 8080
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 360
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: '8'
+              memory: 120Gi
+              nvidia.com/gpu: '2'
+            limits:
+              memory: 200Gi
+              nvidia.com/gpu: '2'
+          volumeMounts:
+            - name: model
+              mountPath: /models
+              readOnly: true
+            - name: chat-template
+              mountPath: /etc/llama
+              readOnly: true
+            - name: benchmark-build
+              mountPath: /build
+              readOnly: true
+      volumes:
+        - name: benchmark-build
+          persistentVolumeClaim:
+            claimName: qwen38-engine-benchmark-build

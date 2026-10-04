@@ -1,0 +1,6 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../clusters/cimda/llama-qwen38-flash-next
+components:
+  - ../../../clusters/cimda/llama-qwen38-flash-next/benchmark-mistralrs
