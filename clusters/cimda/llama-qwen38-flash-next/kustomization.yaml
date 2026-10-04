@@ -5,11 +5,17 @@ configMapGenerator:
     namespace: llama-qwen38
     files:
       - chat-template.jinja
+  - name: qwen38-engine-benchmark-scripts
+    namespace: llama-qwen38
+    files:
+      - benchmark-build.sh
 resources:
   - namespace.yaml
   - pvc.yaml
   - download-job.yaml
   - download-abliterated-job.yaml
+  - benchmark-build-pvc.yaml
+  - benchmark-build-job.yaml
   - deployment.yaml
   - service.yaml
   - tailnet-middleware.yaml

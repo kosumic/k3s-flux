@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: qwen38-mistralrs-build-3f2515e9
+  namespace: llama-qwen38
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 14400
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: cimda0728-tower
+      restartPolicy: Never
+      containers:
+        - name: build
+          image: nvidia/cuda:12.8.1-devel-ubuntu22.04
+          command:
+            - /bin/bash
+            - /scripts/benchmark-build.sh
+          resources:
+            requests:
+              cpu: '8'
+              memory: 16Gi
+            limits:
+              cpu: '16'
+              memory: 64Gi
+          volumeMounts:
+            - name: build
+              mountPath: /build
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: build
+          persistentVolumeClaim:
+            claimName: qwen38-engine-benchmark-build
+        - name: scripts
+          configMap:
+            name: qwen38-engine-benchmark-scripts
