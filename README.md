@@ -23,6 +23,12 @@ the version label in its generated `flux-system/gotk-components.yaml`.
 Third-party resources without available schemas are skipped; Flux resources
 receive a separate strict schema check.
 
+Kustomize Components are validated through a containing overlay, not built
+independently. Register each component in `component_validation_overlays` in
+`scripts/validate.sh`; validation fails if a component has no registered overlay.
+The inactive Mistral.rs component is checked through
+`benchmarks/qwen38-engines/preview`, without deploying that preview.
+
 ## Flux updates
 
 `.github/workflows/update-flux.yaml` runs at 09:00 UTC on the first day of each

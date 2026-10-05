@@ -6,6 +6,12 @@ repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 kubernetes_version="${KUBERNETES_VERSION:-1.36.4}"
 schema_root="$(mktemp -d)"
 
+# Components need their target resources from a containing overlay. Require
+# an explicit validation overlay so inactive components are never unchecked.
+declare -A component_validation_overlays=(
+  ["clusters/cimda/llama-qwen38-flash-next/benchmark-mistralrs"]="benchmarks/qwen38-engines/preview"
+)
+
 cleanup() {
   rm -rf -- "${schema_root}"
 }
@@ -36,6 +42,16 @@ declare -A cluster_flux_versions
 
 echo "INFO: rendering and validating Kustomize overlays (Kubernetes ${kubernetes_version})"
 while IFS= read -r -d '' file; do
+  overlay_path="${file%/kustomization.yaml}"
+  if [[ "$(yq eval -r '.kind' "${repo_root}/${file}")" == "Component" ]]; then
+    component_path="${overlay_path}"
+    overlay_path="${component_validation_overlays[${component_path}]:-}"
+    if [[ -z "${overlay_path}" ]]; then
+      echo "ERROR: no validation overlay registered for component ${component_path}" >&2
+      exit 1
+    fi
+    echo "INFO: validating component ${component_path} through ${overlay_path}"
+  fi
   cluster="${file#clusters/}"
   cluster="${cluster%%/*}"
   if [[ -z "${cluster_flux_versions[${cluster}]:-}" ]]; then
@@ -59,10 +75,10 @@ while IFS= read -r -d '' file; do
       | tar -xz -C "${flux_schema_dir}"
   fi
 
-  overlay="${repo_root}/${file%/kustomization.yaml}"
+  overlay="${repo_root}/${overlay_path}"
   rendered="${schema_root}/rendered.yaml"
   flux_resources="${schema_root}/flux-resources.yaml"
-  echo "INFO: validating ${file%/kustomization.yaml} (Flux ${flux_version})"
+  echo "INFO: validating ${overlay_path} (Flux ${flux_version})"
   kustomize build "${overlay}" --load-restrictor=LoadRestrictionsNone >"${rendered}"
   kubeconform "${kubernetes_schema_flags[@]}" "${rendered}"
 
