@@ -13,7 +13,7 @@ CONFIG = Path(__file__).parent
 RUNTIME = DATA / "runtime"
 SOURCE = RUNTIME / f"ComfyUI-{REVISION}"
 VENV = RUNTIME / "venv"
-for directory in ("runtime", "models", "input", "output", "temp", "cache", "user/default/workflows"):
+for directory in ("runtime", "models", "custom_nodes", "input", "output", "temp", "cache", "user/default/workflows"):
     (DATA / directory).mkdir(parents=True, exist_ok=True)
 os.environ["UV_CACHE_DIR"] = str(DATA / "cache/uv")
 os.environ["HF_HOME"] = str(DATA / "cache/huggingface")

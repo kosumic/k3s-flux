@@ -51,7 +51,8 @@ Run on CIMDA from the k3s-flux checkout:
     kubectl -n comfyui-qwen-image get pods,pvc,job
     kubectl -n comfyui-qwen-image logs deployment/comfyui-qwen-image -c comfyui
     source /home/cimda0728/.local/bin/env
-    UV_CACHE_DIR=/home/data2/zelinrick/nautilus/uv-cache uv run --no-project --python 3.12 python clusters/cimda/comfyui-qwen-image/verify-generation.py
+    comfyui_ip=$(kubectl -n comfyui-qwen-image get service comfyui-qwen-image -o jsonpath='{.spec.clusterIP}')
+    UV_CACHE_DIR=/home/data2/zelinrick/nautilus/uv-cache uv run --no-project --python 3.12 python clusters/cimda/comfyui-qwen-image/verify-generation.py --url http://$comfyui_ip:8188
 
 Pass --standard to verify the standard preset. The check submits a real image
 generation and verifies the returned PNG and dimensions.
