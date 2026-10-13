@@ -4,7 +4,7 @@ metadata:
   name: comfyui-qwen-image
   namespace: comfyui-qwen-image
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   progressDeadlineSeconds: 7200
