@@ -95,6 +95,20 @@ spec:
               value: /data/cache/uv
             - name: HF_HOME
               value: /data/cache/huggingface
+            - name: USER
+              value: comfyui
+            - name: LOGNAME
+              value: comfyui
+            - name: XDG_CACHE_HOME
+              value: /data/cache
+            - name: TORCHINDUCTOR_CACHE_DIR
+              value: /data/cache/torchinductor
+            - name: TRITON_CACHE_DIR
+              value: /data/cache/triton
+            - name: CUDA_CACHE_PATH
+              value: /data/cache/cuda
+            - name: TMPDIR
+              value: /data/temp
             - name: HF_HUB_OFFLINE
               value: '1'
             - name: OMP_NUM_THREADS
