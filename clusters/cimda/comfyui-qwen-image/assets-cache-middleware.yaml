@@ -1,0 +1,11 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: comfyui-assets-cache
+  namespace: comfyui-qwen-image
+spec:
+  headers:
+    customResponseHeaders:
+      Cache-Control: 'private, max-age=86400'
+      Pragma: ''
+      Expires: ''

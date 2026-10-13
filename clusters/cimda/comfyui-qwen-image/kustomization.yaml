@@ -10,7 +10,10 @@ resources:
   - tailnet-middleware.yaml
   - redirect-middleware.yaml
   - strip-prefix-middleware.yaml
+  - compress-middleware.yaml
+  - assets-cache-middleware.yaml
   - ingress.yaml
+  - assets-ingress.yaml
 configMapGenerator:
   - name: comfyui-qwen-bootstrap
     namespace: comfyui-qwen-image

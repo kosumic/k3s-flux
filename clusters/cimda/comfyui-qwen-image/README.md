@@ -4,6 +4,13 @@ Flux deploys one ComfyUI replica on the CIMDA tower, requesting one RTX A6000.
 Open http://cimda0728-tower/comfyui/ or http://100.100.130.75/comfyui/ from
 Tailscale. The ingress keeps the existing tailnet-only policy.
 
+Traefik compresses frontend scripts, styles, and JSON with gzip. Packaged static
+files under /comfyui/assets are cached privately in the browser for one day;
+the content hashes in script and stylesheet filenames select new files after
+frontend updates. HTML and API routes retain their upstream cache headers.
+This reduces initial transfers and avoids downloading the frontend again on
+normal reloads.
+
 Open the Workflows sidebar and select Qwen Image 2.1 Turbo for an 8-step
 generation, or Qwen Image 2.1 for the standard 25-step preset. Edit the prompt
 in Text Encode Qwen Image 2.1 and click Run. Both presets start at 1024 x 1024.
