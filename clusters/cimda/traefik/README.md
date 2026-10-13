@@ -11,7 +11,8 @@ the tower's existing Tailscale address `100.100.130.75`, which routes tailnet
 traffic directly through Kubernetes without ServiceLB's extra masquerade hop.
 This preserves the peer IP needed by the Qwen IPAllowList middleware.
 
-Only Ingress resources and Traefik CRDs in namespace `llama-qwen38` are watched.
+Only Ingress resources and Traefik CRDs in namespaces `llama-qwen38` and
+`comfyui-qwen-image` are watched.
 Traefik is not marked as the default IngressClass. Dashboard exposure and access
 logging are disabled. Untrusted forwarded headers are not accepted, and the
 model middleware evaluates the actual connection peer, not X-Forwarded-For.
@@ -21,3 +22,6 @@ smoke checks, and rollback. The route is restricted to Tailscale address ranges
 and loopback by middleware. The Service also declares source ranges as an extra
 layer; do not remove the middleware or assume all load-balancer paths preserve
 the source address. HTTP relies on the Tailscale connection, not public TLS.
+
+ComfyUI is available under `/comfyui/` with the same Tailscale-only policy;
+see `../comfyui-qwen-image/README.md` for workflows and storage.

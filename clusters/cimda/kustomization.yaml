@@ -6,3 +6,4 @@ resources:
   - gpu-operator
   - traefik
   - llama-qwen38-flash-next
+  - comfyui-qwen-image

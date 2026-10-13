@@ -35,9 +35,11 @@ spec:
         safeNaming: false
         namespaces:
           - llama-qwen38
+          - comfyui-qwen-image
       kubernetesIngress:
         namespaces:
           - llama-qwen38
+          - comfyui-qwen-image
     ingressRoute:
       dashboard:
         enabled: false

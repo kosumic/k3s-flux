@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: comfyui-strip-prefix
+  namespace: comfyui-qwen-image
+spec:
+  stripPrefix:
+    prefixes:
+      - /comfyui

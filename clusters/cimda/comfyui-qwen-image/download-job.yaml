@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: qwen-image-download-df942397
+  namespace: comfyui-qwen-image
+spec:
+  backoffLimit: 6
+  activeDeadlineSeconds: 172800
+  template:
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: cimda0728-tower
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+      restartPolicy: OnFailure
+      containers:
+        - name: download
+          image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim@sha256:e5b65587bce7de595f299855d7385fe7fca39b8a74baa261ba1b7147afa78e58
+          command:
+            - /bin/sh
+            - /bootstrap/download-models.sh
+          env:
+            - name: HOME
+              value: /data/cache
+          resources:
+            requests:
+              cpu: '2'
+              memory: 2Gi
+            limits:
+              memory: 8Gi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: bootstrap
+              mountPath: /bootstrap
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: comfyui-qwen-image
+        - name: bootstrap
+          configMap:
+            name: comfyui-qwen-download

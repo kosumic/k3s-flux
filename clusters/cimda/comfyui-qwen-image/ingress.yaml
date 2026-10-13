@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: comfyui-qwen-image
+  namespace: comfyui-qwen-image
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: comfyui-qwen-image-comfyui-tailnet-only@kubernetescrd,comfyui-qwen-image-comfyui-trailing-slash@kubernetescrd,comfyui-qwen-image-comfyui-strip-prefix@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - http:
+        paths:
+          - path: /comfyui
+            pathType: Prefix
+            backend:
+              service:
+                name: comfyui-qwen-image
+                port:
+                  number: 8188

@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - pv.yaml
+  - pvc.yaml
+  - download-job.yaml
+  - deployment.yaml
+  - service.yaml
+  - tailnet-middleware.yaml
+  - redirect-middleware.yaml
+  - strip-prefix-middleware.yaml
+  - ingress.yaml
+configMapGenerator:
+  - name: comfyui-qwen-bootstrap
+    namespace: comfyui-qwen-image
+    files:
+      - prepare.py
+      - constraints.txt
+      - qwen-image-2.1.json=Qwen Image 2.1.json
+      - qwen-image-2.1-turbo.json=Qwen Image 2.1 Turbo.json
+  - name: comfyui-qwen-download
+    namespace: comfyui-qwen-image
+    files:
+      - download-models.sh

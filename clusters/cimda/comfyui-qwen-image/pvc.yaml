@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: comfyui-qwen-image
+  namespace: comfyui-qwen-image
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ''
+  volumeName: cimda-comfyui-qwen-image
+  resources:
+    requests:
+      storage: 150Gi

@@ -1,0 +1,10 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: comfyui-trailing-slash
+  namespace: comfyui-qwen-image
+spec:
+  redirectRegex:
+    regex: '^(https?://[^/]+/comfyui)$'
+    replacement: '${1}/'
+    permanent: true

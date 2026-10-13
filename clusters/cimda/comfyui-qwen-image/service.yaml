@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: comfyui-qwen-image
+  namespace: comfyui-qwen-image
+spec:
+  selector:
+    app: comfyui-qwen-image
+  ports:
+    - name: http
+      port: 8188
+      targetPort: http

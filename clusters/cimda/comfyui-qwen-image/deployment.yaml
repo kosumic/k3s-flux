@@ -1,0 +1,152 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: comfyui-qwen-image
+  namespace: comfyui-qwen-image
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  progressDeadlineSeconds: 7200
+  selector:
+    matchLabels:
+      app: comfyui-qwen-image
+  template:
+    metadata:
+      annotations:
+        comfyui-revision: 06c67806bcb36789a1e8e1278c6a764b389ff858
+        model-revision: df94239739eef7205973a145ffa6f441f7b64e84
+      labels:
+        app: comfyui-qwen-image
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: cimda0728-tower
+      runtimeClassName: nvidia
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+      terminationGracePeriodSeconds: 120
+      initContainers:
+        - name: prepare-runtime
+          image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim@sha256:e5b65587bce7de595f299855d7385fe7fca39b8a74baa261ba1b7147afa78e58
+          command:
+            - uv
+            - run
+            - --no-project
+            - --python
+            - /usr/local/bin/python
+            - /bootstrap/prepare.py
+          env:
+            - name: HOME
+              value: /data/cache
+            - name: UV_CACHE_DIR
+              value: /data/cache/uv
+          resources:
+            requests:
+              cpu: '4'
+              memory: 4Gi
+            limits:
+              memory: 16Gi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: bootstrap
+              mountPath: /bootstrap
+              readOnly: true
+        - name: wait-for-models
+          image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim@sha256:e5b65587bce7de595f299855d7385fe7fca39b8a74baa261ba1b7147afa78e58
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              until test -f /data/models/.verified-df94239739eef7205973a145ffa6f441f7b64e84; do
+                sleep 15
+              done
+          volumeMounts:
+            - name: data
+              mountPath: /data
+              readOnly: true
+      containers:
+        - name: comfyui
+          image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim@sha256:e5b65587bce7de595f299855d7385fe7fca39b8a74baa261ba1b7147afa78e58
+          command:
+            - uv
+            - run
+            - --no-project
+            - --python
+            - /data/runtime/venv/bin/python
+            - /data/runtime/ComfyUI-06c67806bcb36789a1e8e1278c6a764b389ff858/main.py
+          args:
+            - --listen
+            - 0.0.0.0
+            - --port
+            - '8188'
+            - --base-directory
+            - /data
+            - --disable-auto-launch
+            - --disable-partner-nodes
+          env:
+            - name: HOME
+              value: /data/cache
+            - name: UV_CACHE_DIR
+              value: /data/cache/uv
+            - name: HF_HOME
+              value: /data/cache/huggingface
+            - name: HF_HUB_OFFLINE
+              value: '1'
+            - name: OMP_NUM_THREADS
+              value: '8'
+          ports:
+            - name: http
+              containerPort: 8188
+          startupProbe:
+            httpGet:
+              path: /system_stats
+              port: http
+            periodSeconds: 10
+            failureThreshold: 180
+          readinessProbe:
+            httpGet:
+              path: /system_stats
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /system_stats
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: '8'
+              memory: 32Gi
+              nvidia.com/gpu: '1'
+            limits:
+              memory: 96Gi
+              nvidia.com/gpu: '1'
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: shm
+              mountPath: /dev/shm
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: comfyui-qwen-image
+        - name: bootstrap
+          configMap:
+            name: comfyui-qwen-bootstrap
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 8Gi
