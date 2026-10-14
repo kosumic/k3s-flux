@@ -112,7 +112,7 @@ Live verification passed on 2026-10-14:
 - Historical queries return samples for all six GPUs.
 - Grafana provisions the 11-panel dashboard and its Prometheus query returns six GPU frames.
 - Dashboard HTML, health and dashboard API return HTTP 200 over Tailscale.
-- The LAN URL returns HTTP 403.
+- Connecting to the LAN address times out; access through the Tailscale address succeeds.
 - Prometheus, GPU Operator and Traefik releases report Ready; Grafana has 3/3 containers Ready.
 - The hy8 exporter and CIMDA tunnel are enabled, with user lingering enabled on both hosts.
 - Exporter unit tests, client/server manifest dry runs and the full cluster render passed.
