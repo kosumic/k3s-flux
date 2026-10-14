@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hy8-gpu
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hy8-gpu-exporter
+  endpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      relabelings:
+        - targetLabel: host
+          replacement: hy8
+        - targetLabel: job
+          replacement: gpu-hy8

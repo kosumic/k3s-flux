@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: cimda-grafana
+spec:
+  capacity:
+    storage: 2Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ''
+  claimRef:
+    name: grafana
+    namespace: monitoring
+  local:
+    path: /home/data2/zelinrick/nautilus/gpu-monitoring/grafana
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - cimda0728-tower

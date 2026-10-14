@@ -24,7 +24,44 @@ spec:
   values:
     fullnameOverride: prometheus
     grafana:
-      enabled: false
+      enabled: true
+      defaultDashboardsEnabled: false
+      admin:
+        existingSecret: grafana-admin
+        userKey: admin-user
+        passwordKey: admin-password
+      persistence:
+        enabled: true
+        existingClaim: grafana
+      deploymentStrategy:
+        type: Recreate
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: "1"
+          memory: 768Mi
+      grafana.ini:
+        server:
+          root_url: http://100.100.130.75/grafana/
+          serve_from_sub_path: false
+        auth.anonymous:
+          enabled: true
+          org_role: Viewer
+        users:
+          allow_sign_up: false
+        analytics:
+          reporting_enabled: false
+          check_for_updates: false
+        dashboards:
+          default_home_dashboard_path: /tmp/dashboards/gpu-usage.json
+      sidecar:
+        dashboards:
+          enabled: true
+          searchNamespace: monitoring
+          provider:
+            allowUiUpdates: false
     alertmanager:
       enabled: false
     # These k3s components are absent or expose metrics only on host loopback.
@@ -53,6 +90,7 @@ spec:
         retentionSize: 8GB
         scrapeInterval: 30s
         evaluationInterval: 30s
+        serviceDiscoveryRole: EndpointSlice
         serviceMonitorSelector:
           matchLabels:
             release: prometheus

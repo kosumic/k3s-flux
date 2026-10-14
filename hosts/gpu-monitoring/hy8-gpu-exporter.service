@@ -1,0 +1,17 @@
+[Unit]
+Description=Physical NVIDIA GPU telemetry for CIMDA Prometheus
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=/home/zelinli6/nautilus/gpu-monitoring
+Environment=UV_CACHE_DIR=/home/zelinli6/nautilus/gpu-monitoring/uv-cache
+ExecStart=/home/zelinli6/.local/bin/uv run --offline --no-project --python 3.12 python /home/zelinli6/nautilus/gpu-monitoring/nvidia-smi-exporter.py
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077
+
+[Install]
+WantedBy=default.target

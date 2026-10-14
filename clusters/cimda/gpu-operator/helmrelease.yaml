@@ -46,9 +46,12 @@ spec:
       enabled: false
     dcgmExporter:
       enabled: true
+      env:
+        - name: DCGM_EXPORTER_INTERVAL
+          value: "15000"
       serviceMonitor:
-        enabled: true
-        interval: 30s
+        enabled: false
+        interval: 15s
         additionalLabels:
           release: prometheus
       resources:
@@ -66,6 +69,7 @@ spec:
           DCGM_FI_DEV_GPU_UTIL, gauge, GPU utilization (percent).
           DCGM_FI_DEV_MEM_COPY_UTIL, gauge, Memory interface utilization (percent).
           DCGM_FI_DEV_FB_USED, gauge, Framebuffer memory used (MiB).
+          DCGM_FI_DEV_FB_TOTAL, gauge, Framebuffer capacity (MiB).
           DCGM_FI_DEV_FB_FREE, gauge, Framebuffer memory free (MiB).
           DCGM_FI_DEV_GPU_TEMP, gauge, GPU temperature (Celsius).
           DCGM_FI_DEV_POWER_USAGE, gauge, Power usage (watts).

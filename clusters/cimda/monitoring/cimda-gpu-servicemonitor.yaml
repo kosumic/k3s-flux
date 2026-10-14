@@ -1,0 +1,30 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cimda-gpu
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+      - gpu-operator
+  selector:
+    matchLabels:
+      app: nvidia-dcgm-exporter
+  endpoints:
+    - port: gpu-metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      relabelings:
+        - targetLabel: host
+          replacement: cimda
+        - targetLabel: job
+          replacement: gpu-cimda
+      metricRelabelings:
+        - sourceLabels:
+            - UUID
+          targetLabel: uuid
+        - sourceLabels:
+            - modelName
+          targetLabel: model

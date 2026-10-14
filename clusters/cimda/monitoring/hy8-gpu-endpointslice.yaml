@@ -1,0 +1,19 @@
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: hy8-gpu-exporter
+  namespace: monitoring
+  labels:
+    kubernetes.io/service-name: hy8-gpu-exporter
+    endpointslice.kubernetes.io/managed-by: gitops
+addressType: IPv4
+ports:
+  - name: metrics
+    protocol: TCP
+    port: 19400
+endpoints:
+  - addresses:
+      - 10.42.0.1
+    conditions:
+      ready: true
+    nodeName: cimda0728-tower

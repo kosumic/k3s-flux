@@ -1,0 +1,32 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: gpu-usage
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: gpu-usage
+      interval: 15s
+      rules:
+        - record: gpu_utilization_percent
+          expr: max by (host, gpu, uuid, model) (DCGM_FI_DEV_GPU_UTIL{host="cimda"}) or max by (host,
+            gpu, uuid, model) (nvidia_gpu_utilization_percent{host="hy8"})
+        - record: gpu_memory_used_bytes
+          expr: max by (host, gpu, uuid, model) (DCGM_FI_DEV_FB_USED{host="cimda"}) * 1048576 or max by
+            (host, gpu, uuid, model) (nvidia_gpu_memory_used_bytes{host="hy8"})
+        - record: gpu_memory_total_bytes
+          expr: max by (host, gpu, uuid, model) (DCGM_FI_DEV_FB_TOTAL{host="cimda"}) * 1048576 or max
+            by (host, gpu, uuid, model) (nvidia_gpu_memory_total_bytes{host="hy8"})
+        - record: gpu_memory_free_bytes
+          expr: max by (host, gpu, uuid, model) (DCGM_FI_DEV_FB_FREE{host="cimda"}) * 1048576 or max by
+            (host, gpu, uuid, model) (nvidia_gpu_memory_free_bytes{host="hy8"})
+        - record: gpu_temperature_celsius
+          expr: max by (host, gpu, uuid, model) (DCGM_FI_DEV_GPU_TEMP{host="cimda"}) or max by (host,
+            gpu, uuid, model) (nvidia_gpu_temperature_celsius{host="hy8"})
+        - record: gpu_power_watts
+          expr: max by (host, gpu, uuid, model) (DCGM_FI_DEV_POWER_USAGE{host="cimda"}) or max by (host,
+            gpu, uuid, model) (nvidia_gpu_power_watts{host="hy8"})
+        - record: gpu_memory_utilization_percent
+          expr: 100 * gpu_memory_used_bytes / gpu_memory_total_bytes

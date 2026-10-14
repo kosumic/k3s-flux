@@ -36,10 +36,12 @@ spec:
         namespaces:
           - llama-qwen38
           - comfyui-qwen-image
+          - monitoring
       kubernetesIngress:
         namespaces:
           - llama-qwen38
           - comfyui-qwen-image
+          - monitoring
     ingressRoute:
       dashboard:
         enabled: false

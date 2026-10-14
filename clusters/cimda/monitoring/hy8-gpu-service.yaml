@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hy8-gpu-exporter
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: hy8-gpu-exporter
+spec:
+  ports:
+    - name: metrics
+      port: 19400
+      targetPort: 19400
+      protocol: TCP

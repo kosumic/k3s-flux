@@ -4,3 +4,22 @@ resources:
   - namespace.yaml
   - helmrepository.yaml
   - helmrelease.yaml
+  - grafana-pv.yaml
+  - grafana-pvc.yaml
+  - grafana-tailnet-middleware.yaml
+  - grafana-strip-prefix-middleware.yaml
+  - grafana-ingress.yaml
+  - cimda-gpu-servicemonitor.yaml
+  - hy8-gpu-service.yaml
+  - hy8-gpu-endpointslice.yaml
+  - hy8-gpu-servicemonitor.yaml
+  - gpu-recording-rules.yaml
+configMapGenerator:
+  - name: gpu-usage-dashboard
+    namespace: monitoring
+    files:
+      - gpu-usage.json
+    options:
+      disableNameSuffixHash: true
+      labels:
+        grafana_dashboard: '1'

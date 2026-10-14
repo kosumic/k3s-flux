@@ -1,0 +1,13 @@
+[Unit]
+Description=Private bridge-network SSH tunnel to hy8 GPU telemetry
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/ssh -F /dev/null -N -T -o BatchMode=yes -o ConnectTimeout=15 -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -L 10.42.0.1:19400:127.0.0.1:19400 zelinli6@144.214.61.51
+Restart=always
+RestartSec=5
+UMask=0077
+
+[Install]
+WantedBy=default.target
