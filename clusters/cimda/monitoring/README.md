@@ -50,7 +50,10 @@ systemctl --user restart hy8-gpu-tunnel.service
 curl --fail http://10.42.0.1:19400/healthz
 kubectl -n monitoring get pods,pvc,servicemonitor
 kubectl -n monitoring get prometheus prometheus-prometheus
-flux reconcile kustomization flux-system -n flux-system --with-source
+kubectl -n flux-system annotate --overwrite gitrepository flux-system \
+  reconcile.fluxcd.io/requestedAt="$(date +%s)"
+kubectl -n flux-system annotate --overwrite kustomization flux-system \
+  reconcile.fluxcd.io/requestedAt="$(date +%s)"
 ~~~
 
 On hy8:
@@ -100,3 +103,20 @@ release values; actual deployment goes through Git and Flux.
 References: [Prometheus Operator ServiceMonitor API](https://prometheus-operator.dev/docs/api-reference/api/),
 [Grafana provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/),
 [Grafana reverse proxy setup](https://grafana.com/tutorials/run-grafana-behind-a-proxy/).
+
+## Verified deployment
+
+Live verification passed on 2026-10-14:
+- Both GPU scrape targets are UP at 15-second intervals.
+- All seven utilization, VRAM, temperature and power metrics contain 2 cimda GPUs and 4 hy8 GPUs.
+- Historical queries return samples for all six GPUs.
+- Grafana provisions the 11-panel dashboard and its Prometheus query returns six GPU frames.
+- Dashboard HTML, health and dashboard API return HTTP 200 over Tailscale.
+- The LAN URL returns HTTP 403.
+- Prometheus, GPU Operator and Traefik releases report Ready; Grafana has 3/3 containers Ready.
+- The hy8 exporter and CIMDA tunnel are enabled, with user lingering enabled on both hosts.
+- Exporter unit tests, client/server manifest dry runs and the full cluster render passed.
+
+The live snapshot is /home/data2/zelinrick/nautilus/gpu-monitoring/verification.json.
+The Flux CLI is absent on this host; the kubectl annotations above trigger the
+same controller reconciliation.
