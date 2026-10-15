@@ -1,6 +1,8 @@
 # Continuous GPU monitoring
 
-Dashboard: http://100.100.130.75/grafana/d/gpu-usage/gpu-usage
+Dashboard: http://cimda0728-tower/grafana/d/gpu-usage/gpu-usage
+
+IP fallback: http://100.100.130.75/grafana/d/gpu-usage/gpu-usage
 
 CIMDA k3s runs Prometheus and Grafana. The dashboard shows all physical GPUs:
 two RTX A6000s on cimda and four A100 80 GB GPUs on hy8. It includes current
@@ -120,3 +122,14 @@ Live verification passed on 2026-10-14:
 The live snapshot is /home/data2/zelinrick/nautilus/gpu-monitoring/verification.json.
 The Flux CLI is absent on this host; the kubectl annotations above trigger the
 same controller reconciliation.
+
+## Storage recovery
+
+K3s runtime data, local-path volumes (including Prometheus), kubelet state and pod
+logs now use bind mounts under /home/data2/zelinrick/nautilus/k3s-host. Existing
+Kubernetes paths and PVC identities are preserved. The old disabled Qwen model
+weights were removed at the user's request to make room for this migration.
+
+See [host storage operations](../../../hosts/k3s-storage/README.md) for mount,
+rollback and verification details. The old data bind remains underneath the
+active data2 bind until reboot; /etc/fstab persistently selects data2.
