@@ -31,9 +31,11 @@ nor tunnel listens on a public or LAN address. Prometheus uses EndpointSlice
 service discovery. Both host services restart automatically; lingering is enabled
 for cimda0728 and zelinli6 so they run without an interactive login.
 
-Grafana is available through the existing Tailscale-only Traefik ingress at
-/grafana/. Anonymous tailnet users have Viewer access. The admin password is
-generated locally and kept in Kubernetes Secret grafana-admin, outside Git.
+Grafana is available through Traefik at /grafana/. Its ingress has no IP
+allowlist, and anonymous users have Viewer access. The Service publishes the
+Tailscale address on port 80; the host HTTP listener also serves Grafana on
+port 8000. The admin password is generated locally and kept in Kubernetes
+Secret grafana-admin, outside Git.
 Recovery files on CIMDA are mode 0600:
 - /home/data2/zelinrick/nautilus/gpu-monitoring/grafana-admin-user
 - /home/data2/zelinrick/nautilus/gpu-monitoring/grafana-admin-password

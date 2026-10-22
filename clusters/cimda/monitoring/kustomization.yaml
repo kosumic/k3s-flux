@@ -6,7 +6,6 @@ resources:
   - helmrelease.yaml
   - grafana-pv.yaml
   - grafana-pvc.yaml
-  - grafana-tailnet-middleware.yaml
   - grafana-strip-prefix-middleware.yaml
   - grafana-ingress.yaml
   - cimda-gpu-servicemonitor.yaml
