@@ -10,3 +10,5 @@ spec:
       - fd7a:115c:a1e0::/48
       - 127.0.0.1/32
       - ::1/128
+      # The tower itself after Kubernetes local-Service masquerade.
+      - 192.168.33.132/32

@@ -23,8 +23,13 @@ spec:
     crds: CreateReplace
   values:
     fullnameOverride: traefik
+    # Host-local endpoints avoid Tailscale forwarding masquerade.
+    hostNetwork: true
     deployment:
       replicas: 1
+      dnsPolicy: ClusterFirstWithHostNet
+    updateStrategy:
+      type: Recreate
     nodeSelector:
       kubernetes.io/hostname: cimda0728-tower
     ingressClass:
@@ -38,6 +43,10 @@ spec:
           - comfyui-qwen-image
           - monitoring
       kubernetesIngress:
+        publishedService:
+          enabled: false
+        ingressEndpoint:
+          ip: &tailnetAddress 100.100.130.75
         namespaces:
           - llama-qwen38
           - comfyui-qwen-image
@@ -46,10 +55,10 @@ spec:
       dashboard:
         enabled: false
     ports:
+      traefik:
+        hostIP: 127.0.0.1
       web:
-        expose:
-          default: true
-        exposedPort: 80
+        port: 8000
         forwardedHeaders:
           insecure: false
           trustedIPs: []
@@ -59,21 +68,17 @@ spec:
             writeTimeout: 0s
             idleTimeout: 180s
       websecure:
+        hostIP: 127.0.0.1
         expose:
           default: false
+      metrics:
+        hostIP: 127.0.0.1
     service:
       spec:
-        type: LoadBalancer
-        # Preserve client addresses for the model's IPAllowList middleware.
+        type: ClusterIP
         externalTrafficPolicy: Local
-        # ServiceLB forwards to the NodePort when externalTrafficPolicy is Local.
-        allocateLoadBalancerNodePorts: true
-        # Route this existing tailnet address directly, preserving its peer IP.
         externalIPs:
-          - 100.100.130.75
-        loadBalancerSourceRanges:
-          - 100.64.0.0/10
-          - 127.0.0.1/32
+          - *tailnetAddress
     api:
       dashboard: false
       insecure: false

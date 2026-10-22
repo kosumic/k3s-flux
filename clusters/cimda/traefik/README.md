@@ -1,27 +1,53 @@
 # Cimda ingress controller
 
-Traefik is installed by Flux HelmRelease in `ingress-system`, using chart
-`41.6.1` (Traefik `v3.7.13`). The k3s bundled Traefik and Helm controller remain
-disabled; Flux owns this installation. The existing k3s ServiceLB exposes its
-LoadBalancer Service on HTTP port 80. No Helm CLI installation is required.
+Flux installs Traefik in `ingress-system`, using chart `41.6.1` (Traefik
+`v3.7.13`). The k3s bundled Traefik and Helm controller remain disabled.
 
-The Service uses `externalTrafficPolicy: Local` and keeps NodePort allocation
-enabled: ServiceLB needs the NodePort for this mode. Its `externalIPs` includes
-the tower's existing Tailscale address `100.100.130.75`, which routes tailnet
-traffic directly through Kubernetes without ServiceLB's extra masquerade hop.
-This preserves the peer IP needed by the Qwen IPAllowList middleware.
+Traefik uses the host network on unprivileged HTTP port 8000. Its ClusterIP
+Service exposes port 80 at the tower's existing Tailscale address,
+`100.100.130.75`, through `externalIPs` and `externalTrafficPolicy: Local`.
+ServiceLB and NodePort exposure are not used.
 
-Only Ingress resources and Traefik CRDs in namespaces `llama-qwen38` and
-`comfyui-qwen-image` are watched.
-Traefik is not marked as the default IngressClass. Dashboard exposure and access
-logging are disabled. Untrusted forwarded headers are not accepted, and the
-model middleware evaluates the actual connection peer, not X-Forwarded-For.
+The Service routes to a host-network endpoint, so tailnet connections stay
+local to the node instead of entering Tailscale's forwarding masquerade rule.
+With a normal pod endpoint, that rule rewrites the client to the Kubernetes
+bridge address even when `externalTrafficPolicy: Local` is set.
 
-Qwen is available under `/qwen`; see the model directory's README for the API,
-smoke checks, and rollback. The route is restricted to Tailscale address ranges
-and loopback by middleware. The Service also declares source ranges as an extra
-layer; do not remove the middleware or assume all load-balancer paths preserve
-the source address. HTTP relies on the Tailscale connection, not public TLS.
+The ingress allowlists retain the tailnet and loopback ranges. They also allow
+only the tower's own node address, `192.168.33.132/32`, because Kubernetes
+masquerades locally originated Service connections to that address. This lets
+Whip's SSH browser tunnel use the same URL. The LAN subnet and pod bridge are
+not trusted. Direct LAN requests to port 8000 still fail the allowlist.
 
-ComfyUI is available under `/comfyui/` with the same Tailscale-only policy;
-see `../comfyui-qwen-image/README.md` for workflows and storage.
+The container keeps UID 65532, all capabilities dropped, privilege escalation
+disabled and a read-only root filesystem. Health, management, metrics and the
+unused HTTPS entrypoint bind to loopback. Kubernetes DNS uses
+`ClusterFirstWithHostNet`, and probes use the loopback management listener.
+A `Recreate` strategy avoids host-port conflicts during later upgrades;
+updates briefly interrupt ingress connections.
+
+Only Ingress resources and Traefik CRDs in `llama-qwen38`,
+`comfyui-qwen-image` and `monitoring` are watched. Ingress status publishes the
+Tailscale address directly without looking up an unwatched Service.
+
+Traefik is not the default IngressClass. Dashboard exposure and access logging
+are disabled. Untrusted forwarding headers are not accepted; the allowlists
+check the connection peer. HTTP relies on Tailscale rather than public TLS.
+
+Qwen uses `/qwen`, ComfyUI `/comfyui/` and Grafana `/grafana/`. Each route keeps
+its IPAllowList middleware.
+
+## Validation
+
+```sh
+kubectl kustomize clusters/cimda/traefik >/dev/null
+kubectl kustomize clusters/cimda >/dev/null
+kubectl apply --dry-run=server --server-side --force-conflicts \
+  --field-manager=codex-validation -k clusters/cimda
+```
+
+`force-conflicts` is only for dry-run validation of Flux-owned objects.
+Deploy through Git and Flux. Check Grafana health and the GPU dashboard over
+Tailscale, both remotely and from the tower, plus the other running backends.
+Verify LAN requests are rejected, the former NodePort is gone, and loopback
+health, Traefik and Flux report Ready.
